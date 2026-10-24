@@ -268,3 +268,31 @@ jobs:
       with:
         keep_latest: 6
         delete_tags: true
+        
+    - name: Update Feeds
+      run: |
+          # 1. 添加 CVMagic/edge610 到 feeds 配置
+          # 假设你的 openwrt 源码在 openwrt 目录下，如果在根目录则去掉 cd openwrt
+          echo "src-git edge610 https://github.com/CVMagic/edge610.git;main" >> feeds.conf.default
+          
+          # 2. 更新 feeds
+          ./scripts/feeds update -a
+          
+          # 3. 安装 feeds，特别是新添加的 edge610
+          ./scripts/feeds install -a
+          # 或者只安装特定的包，例如：
+          # ./scripts/feeds install kmod-edge610-drivers 
+
+    - name: Generate Config
+      run: |
+          # 这里需要确保你的 .config 文件中包含了 edge610 驱动的选项
+          # 方法 A: 如果你有一个预设的 config 文件，确保里面开启了相关 CONFIG_PACKAGE_...
+          # 方法 B: 使用 sed 命令强制开启某个配置项 (需知道具体的 CONFIG 名称)
+          # 例如: sed -i 's/# CONFIG_PACKAGE_kmod-edge610 is not set/CONFIG_PACKAGE_kmod-edge610=y/' .config
+          
+          make defconfig
+
+    - name: Compile
+      run: |
+          make -j$(nproc) download V=s
+          make -j$(nproc) V=s
